@@ -1076,6 +1076,26 @@ def Builtin_None : Builtin_Type<"None", "none"> {
 }
 
 //===----------------------------------------------------------------------===//
+// TokenType
+//===----------------------------------------------------------------------===//
+
+def Builtin_Token : Builtin_Type<"Token", "token"> {
+  let summary = "Token type for static def-use links";
+  let description = [{
+    Intuitively, a *token* value is a pointer to an operation (via an OpResult)
+    or a pointer to a region (via an entry block argument). A token carries no
+    runtime data and cannot be forwarded. Tokens are excluded from the `AnyType`
+    type constraint.
+
+    Syntax:
+
+    ```
+    token-type ::= `token`
+    ```
+  }];
+}
+
+//===----------------------------------------------------------------------===//
 // OpaqueType
 //===----------------------------------------------------------------------===//
 
