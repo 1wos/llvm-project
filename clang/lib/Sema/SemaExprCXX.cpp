@@ -13,6 +13,7 @@
 
 #include "TreeTransform.h"
 #include "TypeLocBuilder.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTLambda.h"
 #include "clang/AST/CXXInheritance.h"
@@ -6730,7 +6731,15 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   CXXDestructorDecl *Destructor = IsDecltype ? nullptr : LookupDestructor(RD);
 
   if (Destructor) {
+    bool HadBody = Destructor->doesThisDeclarationHaveABody();
     MarkFunctionReferenced(E->getExprLoc(), Destructor);
+    // MarkFunctionReferenced can synthesize an implicit destructor. If that
+    // happens here, there may be no later top-level definition callback for
+    // CodeGen to see, for example for a closure type in a default member
+    // initializer.
+    if (Destructor->isImplicit() && !HadBody &&
+        Destructor->doesThisDeclarationHaveABody())
+      Consumer.HandleTopLevelDecl(DeclGroupRef(Destructor));
     CheckDestructorAccess(E->getExprLoc(), Destructor,
                           PDiag(diag::err_access_dtor_temp)
                             << E->getType());
